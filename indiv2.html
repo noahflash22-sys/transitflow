@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TransitFlow - Multi-Screen Prototype</title>
+    <style>
+        :root {
+            --at-navy: #003865;
+            --at-yellow: #FFD100;
+            --success-green: #27AE60;
+            --bg-light: #F8F9FA;
+            --text-main: #333;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background-color: #1a1a1a;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .phone {
+            width: 375px;
+            height: 812px;
+            background-color: var(--bg-light);
+            border: 12px solid #333;
+            border-radius: 45px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.6);
+        }
+
+        /* Screen Management */
+        .screen {
+            display: none;
+            height: 100%;
+            width: 100%;
+            flex-direction: column;
+        }
+
+        .screen.active {
+            display: flex;
+        }
+
+        /* Fixed Components (Status & Alert) */
+        .status-bar {
+            height: 44px;
+            padding: 0 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .next-stop-alert {
+            background-color: var(--at-yellow);
+            color: #000;
+            padding: 12px;
+            text-align: center;
+            font-size: 13px;
+            font-weight: 700;
+            border-bottom: 2px solid #ccaa00;
+        }
+
+        /* Home Screen Styling */
+        header { padding: 25px 20px; text-align: center; }
+        .logo { font-size: 32px; font-weight: 800; color: var(--at-navy); margin: 0; }
+        
+        .progress-box { background: rgb(228, 222, 222); margin: 0 20px 25px; padding: 15px; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .stat-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; font-weight: 600; }
+        .bar-outer { height: 10px; background: #eee; border-radius: 5px; overflow: hidden; }
+        .bar-inner { height: 100%; width: 45%; background: var(--success-green); }
+
+        .menu-container { padding: 0 20px; display: flex; flex-direction: column; gap: 15px; }
+        .action-card {
+            background: white;
+            border: 3px solid var(--at-navy); /* High contrast border */
+            border-radius: 18px;
+            padding: 22px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .status-badge { font-size: 12px; color: var(--success-green); font-weight: 800; }
+
+        .weekly-hub { position: absolute; bottom: 80px; left: 20px; right: 20px; background: var(--at-navy); color: white; padding: 15px; border-radius: 15px; text-align: center; }
+        .weekly-hub p { margin: 5px 0 0; font-size: 22px; font-weight: 700; color: var(--at-yellow); }
+
+        /* Module Screen Styling */
+        .module-header {
+            padding: 20px;
+            background: var(--at-navy);
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .back-btn { background: none; border: 1px solid white; color: white; padding: 5px 10px; border-radius: 5px; cursor: pointer; }
+        
+        .module-content { padding: 25px; flex-grow: 1; overflow-y: auto; color: var(--text-main); }
+        
+        /* Specific Module UI Components */
+        .task-item { display: flex; gap: 10px; margin-bottom: 15px; font-size: 18px; align-items: center; }
+        .audio-player { background: #eee; padding: 20px; border-radius: 15px; text-align: center; margin-top: 50px; }
+        
+        /* Ergonomic Back Button Styling */
+        .back-sidebar-btn {
+        position: absolute;
+        bottom: 40px;
+        right: 20px;
+        width: 60px;
+        height: 60px;
+        background-color: #003865; /* Matches your Navy theme */
+        color: white;
+        border: 3px solid #FFD100; /* Matches your Yellow highlight */
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 28px;
+        font-weight: bold;
+        box-shadow: 0 8px 15px rgba(0,0,0,0.3);
+        cursor: pointer;
+        z-index: 1000; /* Ensures it stays above all other content */
+        transition: transform 0.1s;
+        }
+
+        .back-sidebar-btn:active {
+        transform: scale(0.9); /* Visual feedback when tapped */
+        }
+    </style>
+</head>
+<body>
+
+    <div class="phone">
+        <!-- Persistent UI elements -->
+        <div class="status-bar">
+            <span>10:30 PM</span>
+            <span>🔋 68%</span>
+        </div>
+        <div class="next-stop-alert">
+            ⚠️ NEXT STOP: Symonds St (UoA) in 2 mins
+        </div>
+
+        <!-- HOME SCREEN -->
+        <div id="home" class="screen active">
+            <header><h1 class="logo">TransitFlow</h1></header>
+            
+            <div class="progress-box">
+                <div class="stat-row"><span>Daily Goal</span><span style="color: var(--success-green);">+22m gained</span></div>
+                <div class="bar-outer"><div class="bar-inner"></div></div>
+            </div>
+
+            <div class="menu-container">
+                <div class="action-card" onclick="showScreen('notes')">
+                    <span style="font-weight:700; color:var(--at-navy);">Review Lecture Notes</span>
+                    <span class="status-badge">✓ DOWNLOADED</span>
+                </div>
+                <div class="action-card" onclick="showScreen('tasks')">
+                    <span style="font-weight:700; color:var(--at-navy);">Sync Task List</span>
+                    <span class="status-badge">✓ DOWNLOADED</span>
+                </div>
+                <div class="action-card" onclick="showScreen('news')">
+                    <span style="font-weight:700; color:var(--at-navy);">Industry News Pod</span>
+                    <span class="status-badge" style="color:#999">◌ SYNCING</span>
+                </div>
+            </div>
+
+            <div class="weekly-hub">
+                <h3 style="margin:0; font-size:12px; opacity:0.8;">WEEKLY RECLAIMED TIME</h3>
+                <p>4h 45m</p>
+            </div>
+        </div>
+
+        <!-- NOTES SCREEN -->
+        <div id="notes" class="screen">
+            <div class="module-header">
+                <button class="back-btn" onclick="showScreen('home')">← Back</button>
+                <h2 style="margin:0; font-size:18px;">INNOVATE 100G Notes</h2>
+            </div>
+            <div class="module-content">
+                <h3>Week 4: Design Thinking</h3>
+                <p>1. Empathize with the user context (e.g. standing on a bus).</p>
+                <p>2. Define core pain points like "commuter anxiety".</p>
+                <p>3. Prototype at increasing levels of resolution.</p>
+                <div style="background:#ddd; height:200px; margin-top:20px; display:flex; align-items:center; justify-content:center; border-radius:10px;">
+                    [Image: Schematic Diagram]
+                </div>
+            </div>
+            <div class="back-sidebar-btn" onclick="showScreen('home')">↩</div>
+        </div>
+
+        <!-- TASKS SCREEN -->
+        <div id="tasks" class="screen">
+            <div class="module-header">
+                <button class="back-btn" onclick="showScreen('home')">← Back</button>
+                <h2 style="margin:0; font-size:18px;">Task List</h2>
+            </div>
+            <div class="module-content">
+                <div class="task-item"><input type="checkbox" checked> Submit Quiz 3</div>
+                <div class="task-item"><input type="checkbox"> Read Chapter 5</div>
+                <div class="task-item"><input type="checkbox"> Update Report Card</div>
+                <div class="task-item"><input type="checkbox"> Finish Prototype 2</div>
+            </div>
+            <div class="back-sidebar-btn" onclick="showScreen('home')">↩</div>
+        </div>
+
+        <!-- NEWS SCREEN -->
+        <div id="news" class="screen">
+            <div class="module-header">
+                <button class="back-btn" onclick="showScreen('home')">← Back</button>
+                <h2 style="margin:0; font-size:18px;">Tech News Pod</h2>
+            </div>
+            <div class="module-content">
+                <h3>Episode 42: Buses Are So Time-Wasting</h3>
+                <div class="audio-player">
+                    <div style="font-size:40px;">▶️</div>
+                    <p>04:20 / 15:00</p>
+                    <div class="bar-outer"><div class="bar-inner" style="width:30%"></div></div>
+                </div>
+                <p style="margin-top:20px; font-style:italic;">Summary: Exploring how real-time data reduces stress for daily commuters...</p>
+            </div>
+            <div class="back-sidebar-btn" onclick="showScreen('home')">↩</div>
+        </div>
+    </div>
+
+    <script>
+        function showScreen(screenId) {
+            // Hide all screens
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            // Show the requested screen
+            document.getElementById(screenId).classList.add('active');
+        }
+    </script>
+</body>
+</html>
